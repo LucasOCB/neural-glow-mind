@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { NeuralSphere } from "../components/NeuralSphere";
+import type { SelectedNodeInfo } from "../components/NeuralSphere";
+import { NodeDetailPanel } from "../components/NodeDetailPanel";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -13,6 +16,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [selectedNode, setSelectedNode] = useState<SelectedNodeInfo | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const handleNodeSelect = useCallback((info: SelectedNodeInfo | null) => {
+    setSelectedNode(info);
+    // We don't track index from sphere directly, but the sphere handles it internally
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedIndex(null);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden relative">
       {/* Full-screen sphere */}
@@ -23,7 +39,10 @@ function Index() {
             background: "radial-gradient(ellipse 60% 60% at 50% 50%, oklch(0.65 0.15 280 / 0.06), transparent)",
           }}
         />
-        <NeuralSphere />
+        <NeuralSphere
+          onNodeSelect={handleNodeSelect}
+          selectedNodeIndex={selectedIndex}
+        />
       </div>
 
       {/* Minimal floating brand */}
@@ -41,34 +60,41 @@ function Index() {
         </span>
       </motion.div>
 
-      {/* Center label */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-      >
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground/90 tracking-tight">
-            Knowledge Brain
-          </h1>
-          <p className="text-sm text-muted-foreground mt-3 font-mono tracking-wide">
-            2,847 nodes · 41.2K connections
-          </p>
-        </div>
-      </motion.div>
+      {/* Center label - hide when node selected */}
+      {!selectedNode && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+        >
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground/90 tracking-tight">
+              Knowledge Brain
+            </h1>
+            <p className="text-sm text-muted-foreground mt-3 font-mono tracking-wide">
+              clique em um nó para explorar
+            </p>
+          </div>
+        </motion.div>
+      )}
 
-      {/* Bottom subtle info */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-center"
-      >
-        <p className="text-xs text-muted-foreground/60 font-mono">
-          move cursor to interact
-        </p>
-      </motion.div>
+      {/* Node detail panel */}
+      <NodeDetailPanel node={selectedNode} onClose={handleClose} />
+
+      {/* Bottom hint */}
+      {!selectedNode && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-center"
+        >
+          <p className="text-xs text-muted-foreground/60 font-mono">
+            mova o cursor para interagir
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
