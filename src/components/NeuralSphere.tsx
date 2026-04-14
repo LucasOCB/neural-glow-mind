@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 // Knowledge content for each node
 export const knowledgeData = [
@@ -74,8 +74,9 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
   const nodesRef = useRef<Node[]>([]);
   const connectionsRef = useRef<Connection[]>([]);
   const projectedRef = useRef<ProjectedNode[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0 });
   const selectedRef = useRef<number | null>(null);
+  const dragRef = useRef({ dragging: false, lastX: 0, lastY: 0, movedEnough: false });
+  const rotationRef = useRef({ y: 0, x: 0 });
 
   useEffect(() => {
     selectedRef.current = selectedNodeIndex ?? null;
@@ -215,28 +216,48 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
     resize();
     window.addEventListener("resize", resize);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseRef.current = {
-        x: (e.clientX - rect.left - rect.width / 2) / rect.width,
-        y: (e.clientY - rect.top - rect.height / 2) / rect.height,
-      };
+    const drag = dragRef.current;
+    const rotation = rotationRef.current;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      drag.dragging = true;
+      drag.lastX = e.clientX;
+      drag.lastY = e.clientY;
+      drag.movedEnough = false;
     };
 
-    const handleClick = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!drag.dragging) return;
+      const dx = e.clientX - drag.lastX;
+      const dy = e.clientY - drag.lastY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.movedEnough = true;
+      rotation.y += dx * 0.005;
+      rotation.x += dy * 0.005;
+      // Clamp X rotation
+      rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, rotation.x));
+      drag.lastX = e.clientX;
+      drag.lastY = e.clientY;
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      const wasDragging = drag.movedEnough;
+      drag.dragging = false;
+
+      // Only handle click if we didn't drag
+      if (wasDragging) return;
+
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
       const projected = projectedRef.current;
 
-      // Find closest knowledge node within hit radius
       let closest: { dist: number; index: number } | null = null;
       for (const p of projected) {
         const node = nodesRef.current[p.index];
         if (node.dataIndex < 0) continue;
-        const dx = clickX - p.x;
-        const dy = clickY - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const pdx = clickX - p.x;
+        const pdy = clickY - p.y;
+        const dist = Math.sqrt(pdx * pdx + pdy * pdy);
         const hitRadius = Math.max(p.size * 4, 14);
         if (dist < hitRadius && (!closest || dist < closest.dist)) {
           closest = { dist, index: p.index };
@@ -248,7 +269,6 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
         const proj = projected.find((p) => p.index === closest!.index)!;
         const data = knowledgeData[node.dataIndex];
 
-        // Find connected knowledge node names
         const connectedIndices = new Set<number>();
         for (const conn of connectionsRef.current) {
           if (conn.from === closest.index) connectedIndices.add(conn.to);
@@ -263,8 +283,8 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
         onNodeSelect?.({
           ...data,
           connectedNames,
-          screenX: proj.x,
-          screenY: proj.y,
+          screenX: proj?.x ?? 0,
+          screenY: proj?.y ?? 0,
         });
       } else {
         selectedRef.current = null;
@@ -272,8 +292,9 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
       }
     };
 
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("click", handleClick);
+    canvas.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     let animId: number;
     const draw = (time: number) => {
@@ -287,8 +308,8 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
 
       const cx = w / 2;
       const cy = h / 2;
-      const rotY = time * 0.00015 + mouseRef.current.x * 0.5;
-      const rotX = mouseRef.current.y * 0.3;
+      const rotY = rotationRef.current.y;
+      const rotX = rotationRef.current.x;
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX);
@@ -487,16 +508,17 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [initNodes]);
+  }, [initNodes, onNodeSelect]);
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: "pointer" }}
+      style={{ cursor: "grab" }}
     />
   );
 }
