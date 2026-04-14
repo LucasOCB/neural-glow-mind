@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 
 // Knowledge content for each node
-const knowledgeData = [
+export const knowledgeData = [
   { name: "Quantum Computing", category: "Física", description: "Computação baseada em princípios da mecânica quântica, utilizando qubits para processamento paralelo massivo.", tags: ["qubits", "superposição", "emaranhamento"] },
   { name: "Redes Neurais", category: "IA", description: "Modelos computacionais inspirados no cérebro humano, compostos por camadas de neurônios artificiais interconectados.", tags: ["deep learning", "perceptron", "backpropagation"] },
   { name: "Teoria dos Grafos", category: "Matemática", description: "Estudo de estruturas formadas por vértices e arestas, fundamental para redes e otimização.", tags: ["grafos", "árvores", "caminhos"] },
@@ -66,9 +66,10 @@ export interface SelectedNodeInfo {
 interface NeuralSphereProps {
   onNodeSelect?: (info: SelectedNodeInfo | null) => void;
   selectedNodeIndex?: number | null;
+  selectByNameRef?: React.MutableRefObject<((name: string) => void) | null>;
 }
 
-export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSphereProps) {
+export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef }: NeuralSphereProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<Node[]>([]);
   const connectionsRef = useRef<Connection[]>([]);
