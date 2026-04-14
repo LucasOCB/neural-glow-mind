@@ -81,6 +81,46 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
     selectedRef.current = selectedNodeIndex ?? null;
   }, [selectedNodeIndex]);
 
+  // Expose selectByName via ref
+  const selectNodeByName = useCallback((name: string) => {
+    const nodes = nodesRef.current;
+    const connections = connectionsRef.current;
+    const projected = projectedRef.current;
+
+    for (const node of nodes) {
+      if (node.dataIndex >= 0 && knowledgeData[node.dataIndex].name === name) {
+        const nodeIndex = nodes.indexOf(node);
+        const data = knowledgeData[node.dataIndex];
+        const proj = projected.find((p) => p.index === nodeIndex);
+
+        const connectedIndices = new Set<number>();
+        for (const conn of connections) {
+          if (conn.from === nodeIndex) connectedIndices.add(conn.to);
+          if (conn.to === nodeIndex) connectedIndices.add(conn.from);
+        }
+        const connectedNames = Array.from(connectedIndices)
+          .map((i) => nodes[i].dataIndex)
+          .filter((di) => di >= 0)
+          .map((di) => knowledgeData[di].name);
+
+        selectedRef.current = nodeIndex;
+        onNodeSelect?.({
+          ...data,
+          connectedNames,
+          screenX: proj?.x ?? 0,
+          screenY: proj?.y ?? 0,
+        });
+        break;
+      }
+    }
+  }, [onNodeSelect]);
+
+  useEffect(() => {
+    if (selectByNameRef) {
+      selectByNameRef.current = selectNodeByName;
+    }
+  }, [selectByNameRef, selectNodeByName]);
+
   const initNodes = useCallback((width: number, height: number) => {
     const nodes: Node[] = [];
     const nodeCount = knowledgeData.length;
