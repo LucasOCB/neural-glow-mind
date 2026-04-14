@@ -162,10 +162,13 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      if (w === 0 || h === 0) return;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       ctx.scale(dpr, dpr);
-      initNodes(canvas.offsetWidth, canvas.offsetHeight);
+      initNodes(w, h);
     };
 
     resize();
