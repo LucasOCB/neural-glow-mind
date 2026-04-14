@@ -4,9 +4,10 @@ import type { SelectedNodeInfo } from "./NeuralSphere";
 interface NodeDetailPanelProps {
   node: SelectedNodeInfo | null;
   onClose: () => void;
+  onSelectConnected?: (name: string) => void;
 }
 
-export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
+export function NodeDetailPanel({ node, onClose, onSelectConnected }: NodeDetailPanelProps) {
   return (
     <AnimatePresence>
       {node && (
@@ -63,7 +64,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
                 ))}
               </div>
 
-              {/* Connected nodes */}
+              {/* Connected nodes - clickable */}
               {node.connectedNames.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-border/30">
                   <p className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase mb-2">
@@ -71,12 +72,13 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {node.connectedNames.slice(0, 8).map((name) => (
-                      <span
+                      <button
                         key={name}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-accent/10 text-accent/90 border border-accent/15"
+                        onClick={() => onSelectConnected?.(name)}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-accent/10 text-accent/90 border border-accent/15 hover:bg-accent/25 hover:text-foreground hover:border-accent/30 transition-all cursor-pointer"
                       >
                         {name}
-                      </span>
+                      </button>
                     ))}
                     {node.connectedNames.length > 8 && (
                       <span className="text-xs px-2 py-1 text-muted-foreground">
