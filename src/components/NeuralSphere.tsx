@@ -74,8 +74,9 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
   const nodesRef = useRef<Node[]>([]);
   const connectionsRef = useRef<Connection[]>([]);
   const projectedRef = useRef<ProjectedNode[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0 });
   const selectedRef = useRef<number | null>(null);
+  const dragRef = useRef({ dragging: false, lastX: 0, lastY: 0, movedEnough: false });
+  const rotationRef = useRef({ y: 0, x: 0 });
 
   useEffect(() => {
     selectedRef.current = selectedNodeIndex ?? null;
