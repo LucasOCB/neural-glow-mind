@@ -508,10 +508,11 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("click", handleClick);
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [initNodes]);
+  }, [initNodes, onNodeSelect]);
 
   return (
     <canvas
