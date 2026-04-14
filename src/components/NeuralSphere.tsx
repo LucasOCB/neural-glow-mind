@@ -518,7 +518,7 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
-      style={{ cursor: "pointer" }}
+      style={{ cursor: "grab" }}
     />
   );
 }
