@@ -413,6 +413,7 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
 
       // Draw nodes
       for (const p of projected) {
+        if (!isFinite(p.x) || !isFinite(p.y) || !isFinite(p.size)) continue;
         const node = nodes[p.index];
         const isSelected = p.index === selected;
         const isConnected = connectedSet.has(p.index);
