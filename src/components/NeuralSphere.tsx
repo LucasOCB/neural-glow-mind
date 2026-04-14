@@ -238,6 +238,10 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
     const draw = (time: number) => {
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
+      if (w === 0 || h === 0 || nodesRef.current.length === 0) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, w, h);
 
       const cx = w / 2;
