@@ -162,10 +162,13 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      if (w === 0 || h === 0) return;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       ctx.scale(dpr, dpr);
-      initNodes(canvas.offsetWidth, canvas.offsetHeight);
+      initNodes(w, h);
     };
 
     resize();
@@ -235,6 +238,10 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
     const draw = (time: number) => {
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
+      if (w === 0 || h === 0 || nodesRef.current.length === 0) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, w, h);
 
       const cx = w / 2;
@@ -291,10 +298,15 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
       projected.sort((a, b) => a.z - b.z);
       projectedRef.current = projected;
 
+      // Build index lookup map
+      const projMap = new Map<number, ProjectedNode>();
+      for (const p of projected) projMap.set(p.index, p);
+
       // Draw connections
       for (const conn of connections) {
-        const a = projected.find((p) => p.index === conn.from)!;
-        const b = projected.find((p) => p.index === conn.to)!;
+        const a = projMap.get(conn.from);
+        const b = projMap.get(conn.to);
+        if (!a || !b) continue;
         const isHighlighted = selected !== null && (
           (conn.from === selected || conn.to === selected) &&
           connectedSet.has(conn.from) && connectedSet.has(conn.to)
