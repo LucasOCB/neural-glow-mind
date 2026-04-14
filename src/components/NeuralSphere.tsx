@@ -308,8 +308,8 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef 
 
       const cx = w / 2;
       const cy = h / 2;
-      const rotY = time * 0.00015 + mouseRef.current.x * 0.5;
-      const rotX = mouseRef.current.y * 0.3;
+      const rotY = rotationRef.current.y;
+      const rotX = rotationRef.current.x;
       const cosY = Math.cos(rotY);
       const sinY = Math.sin(rotY);
       const cosX = Math.cos(rotX);
