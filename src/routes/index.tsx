@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { NeuralSphere } from "../components/NeuralSphere";
 import type { SelectedNodeInfo } from "../components/NeuralSphere";
@@ -17,16 +17,18 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [selectedNode, setSelectedNode] = useState<SelectedNodeInfo | null>(null);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectByNameRef = useRef<((name: string) => void) | null>(null);
 
   const handleNodeSelect = useCallback((info: SelectedNodeInfo | null) => {
     setSelectedNode(info);
-    // We don't track index from sphere directly, but the sphere handles it internally
   }, []);
 
   const handleClose = useCallback(() => {
     setSelectedNode(null);
-    setSelectedIndex(null);
+  }, []);
+
+  const handleSelectConnected = useCallback((name: string) => {
+    selectByNameRef.current?.(name);
   }, []);
 
   return (
@@ -41,7 +43,7 @@ function Index() {
         />
         <NeuralSphere
           onNodeSelect={handleNodeSelect}
-          selectedNodeIndex={selectedIndex}
+          selectByNameRef={selectByNameRef}
         />
       </div>
 
@@ -80,7 +82,11 @@ function Index() {
       )}
 
       {/* Node detail panel */}
-      <NodeDetailPanel node={selectedNode} onClose={handleClose} />
+      <NodeDetailPanel
+        node={selectedNode}
+        onClose={handleClose}
+        onSelectConnected={handleSelectConnected}
+      />
 
       {/* Bottom hint */}
       {!selectedNode && (

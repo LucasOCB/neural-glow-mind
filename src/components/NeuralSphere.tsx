@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 
 // Knowledge content for each node
-const knowledgeData = [
+export const knowledgeData = [
   { name: "Quantum Computing", category: "Física", description: "Computação baseada em princípios da mecânica quântica, utilizando qubits para processamento paralelo massivo.", tags: ["qubits", "superposição", "emaranhamento"] },
   { name: "Redes Neurais", category: "IA", description: "Modelos computacionais inspirados no cérebro humano, compostos por camadas de neurônios artificiais interconectados.", tags: ["deep learning", "perceptron", "backpropagation"] },
   { name: "Teoria dos Grafos", category: "Matemática", description: "Estudo de estruturas formadas por vértices e arestas, fundamental para redes e otimização.", tags: ["grafos", "árvores", "caminhos"] },
@@ -66,9 +66,10 @@ export interface SelectedNodeInfo {
 interface NeuralSphereProps {
   onNodeSelect?: (info: SelectedNodeInfo | null) => void;
   selectedNodeIndex?: number | null;
+  selectByNameRef?: React.MutableRefObject<((name: string) => void) | null>;
 }
 
-export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSphereProps) {
+export function NeuralSphere({ onNodeSelect, selectedNodeIndex, selectByNameRef }: NeuralSphereProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<Node[]>([]);
   const connectionsRef = useRef<Connection[]>([]);
@@ -79,6 +80,46 @@ export function NeuralSphere({ onNodeSelect, selectedNodeIndex }: NeuralSpherePr
   useEffect(() => {
     selectedRef.current = selectedNodeIndex ?? null;
   }, [selectedNodeIndex]);
+
+  // Expose selectByName via ref
+  const selectNodeByName = useCallback((name: string) => {
+    const nodes = nodesRef.current;
+    const connections = connectionsRef.current;
+    const projected = projectedRef.current;
+
+    for (const node of nodes) {
+      if (node.dataIndex >= 0 && knowledgeData[node.dataIndex].name === name) {
+        const nodeIndex = nodes.indexOf(node);
+        const data = knowledgeData[node.dataIndex];
+        const proj = projected.find((p) => p.index === nodeIndex);
+
+        const connectedIndices = new Set<number>();
+        for (const conn of connections) {
+          if (conn.from === nodeIndex) connectedIndices.add(conn.to);
+          if (conn.to === nodeIndex) connectedIndices.add(conn.from);
+        }
+        const connectedNames = Array.from(connectedIndices)
+          .map((i) => nodes[i].dataIndex)
+          .filter((di) => di >= 0)
+          .map((di) => knowledgeData[di].name);
+
+        selectedRef.current = nodeIndex;
+        onNodeSelect?.({
+          ...data,
+          connectedNames,
+          screenX: proj?.x ?? 0,
+          screenY: proj?.y ?? 0,
+        });
+        break;
+      }
+    }
+  }, [onNodeSelect]);
+
+  useEffect(() => {
+    if (selectByNameRef) {
+      selectByNameRef.current = selectNodeByName;
+    }
+  }, [selectByNameRef, selectNodeByName]);
 
   const initNodes = useCallback((width: number, height: number) => {
     const nodes: Node[] = [];
