@@ -38,6 +38,8 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Cortex — Knowledge Brain" },
+      { name: "twitter:description", content: "A neural knowledge mapping interface for connected thinking" },
     ],
     links: [
       {
